@@ -1,0 +1,361 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Stina AI</title>
+    <link rel="stylesheet" href="lib/bulma/bulma.min.css" />
+    <link rel="stylesheet" href="src/styles/theme.css" />
+    <link rel="stylesheet" href="src/styles/tutorial.css" />
+    <link rel="stylesheet" href="src/styles/sidebar.css" />
+    <link rel="stylesheet" href="src/styles/chat.css" />
+    <link rel="stylesheet" href="src/styles/settings.css" />
+    <link rel="stylesheet" href="src/styles/components/inputs.css" />
+    <link rel="stylesheet" href="src/styles/components/modals.css" />
+    <link rel="stylesheet" href="src/styles/markdown.css" />
+    <link rel="stylesheet" href="src/styles/components/code_block.css" />
+    <link rel="stylesheet" href="src/styles/icons.css" />
+  </head>
+  <body class="has-navbar-fixed-top">
+    <!-- Top Navigation -->
+    <nav class="navbar is-fixed-top" role="navigation" aria-label="main navigation">
+      <div class="navbar-brand">
+        <a role="button" class="navbar-burger" aria-label="menu" aria-expanded="false" data-target="sidebarMenu">
+          <span aria-hidden="true"></span>
+          <span aria-hidden="true"></span>
+          <span aria-hidden="true"></span>
+        </a>
+      </div>
+      <div class="navbar-menu">
+        <div class="navbar-start">
+          <div class="navbar-item">
+            <a id="new-chat-btn" class="button is-link" data-translation-key="newChat">
+            </a>
+          </div>
+        </div>
+        <div class="navbar-end">
+          <div class="navbar-item">
+            <button id="help-btn" class="button is-light help-button-highlight" aria-label="Help">
+              <img src="src/icons/help.svg" alt="Help" />
+            </button>
+          </div>
+          <div class="navbar-item">
+            <button id="settings-btn" class="button is-light" aria-label="Settings">
+              <img src="src/icons/settings.svg" alt="Settings" />
+            </button>
+          </div>
+        </div>
+      </div>
+    </nav>
+
+    <div class="columns is-gapless is-mobile" style="height: calc(100vh - 52px); overflow: hidden;">
+      <!-- Sidebar -->
+      <aside class="column is-2 is-hidden-mobile sidebar" id="sidebarMenu" style="height: 100%; overflow-y: auto;">
+        <div class="menu-container">
+          <ul class="menu-list" id="chat-list"></ul> 
+        </div>
+      </aside>
+
+      <!-- Main Chat Area -->
+      <main class="column is-12-mobile is-10-desktop section" style="height: 100%; overflow: hidden;">
+        <div class="container is-fluid" style="height: 100%; display: flex; flex-direction: column; align-items: center;">
+          <!-- Centered Container for Chat Content -->
+          <div class="container is-fluid" style="flex: 1; display: flex; flex-direction: column; height: 100%;">
+          <div id="chat-history" class="box content" style="overflow-y: auto;"></div>
+          <!-- Message Input Box -->
+          <div class="message-input-container">
+            <!-- Pending Uploads Section -->
+            <div id="pending-uploads-container" class="pending-uploads-container"></div>
+            <!-- Classification Warning -->
+            <div id="classification-warning" style="display:none; color:red; text-align:center; font-size:0.9rem; margin-bottom:0.5rem;"></div>
+            <!-- Open Information Notice -->
+            <div id="model-clearance-notice" style="display:none; text-align:center; font-size:0.9rem; margin-bottom:0.5rem; color:#333;"></div>
+            <!-- Input Box -->
+            <textarea
+              id="user-input"
+              class="input-box"
+              placeholder=""
+              rows="1"
+            ></textarea>
+            <div id="token-warning" style="display: none; color: red; font-size: 0.9rem; margin-top: 4px;"></div>
+
+            <!-- Toolbar Below the Input -->
+            <div class="toolbar">
+              <!-- Left Side of Toolbar -->
+              <div class="left-toolbar">
+                <!-- Model Selection -->
+                <div class="select-container">
+                  <select id="model-select"></select>
+                </div>
+                <!-- Instruction Selector and Edit Button -->
+                <div class="instruction-selector-container" id="instructions-group" style="display: none;">
+                  <div class="select-container">
+                    <select id="instructions-select"></select>
+                  </div>
+                  <button 
+                    id="edit-instruction-btn" 
+                    class="button is-transparent is-small" 
+                    style="display: none;"
+                    aria-label="Edit Instruction"
+                  >
+                    <img src="src/icons/edit.svg" alt="Edit" />
+                  </button>
+                </div>
+              </div>
+              <!-- Right Side of Toolbar -->
+              <!-- Documents Management Button (hidden by default) -->
+              <button 
+                id="documents-btn" 
+                class="button" 
+                aria-label="Manage Documents" 
+                style="display: none;"
+              >
+                <img src="src/icons/documents.svg" alt="Documents" />
+              </button>
+              <!-- Attach File Button -->
+              <button id="attach-file-btn" class="button" aria-label="Attach File">
+                <img src="src/icons/attach.svg" alt="Attach" />
+              </button>
+              <!-- Send Button -->
+              <button id="send-btn" class="send-button" aria-label="Send">
+                <img src="src/icons/send.svg" alt="Send" />
+              </button>
+            </div>
+          </div>
+      </div>
+      </main>
+    </div>
+
+
+    <!-- Custom Modal -->
+    <div id="custom-modal" class="modal">
+      <div class="modal-background"></div>
+      <div class="modal-card">
+        <header class="modal-card-head">
+          <p class="modal-card-title" id="custom-modal-title">Title</p>
+          <button id="custom-modal-close" class="delete" aria-label="close"></button>
+        </header>
+        <section class="modal-card-body" id="custom-modal-body">
+          <!-- Message content will be injected here -->
+        </section>
+        <footer class="modal-card-foot" id="custom-modal-footer">
+          <!-- Buttons will be injected here -->
+        </footer>
+      </div>
+    </div>
+
+    <!-- Include Marked.js and DOMPurify -->
+    <script src="lib/marked/marked.min.js"></script> <!-- Marked.js Markdown parser -->
+    <script src="lib/purify/purify.min.js"></script> <!-- Purify HTML sanitizer -->
+
+    <!-- Include highlight.js-->
+    <script src="lib/highlight/highlight.min.js"></script> <!-- Highlight.js JavaScript -->
+
+    <!-- Include PDF.js -->
+    <script src="lib/pdfjs/pdf.min.js"></script>
+    <script src="lib/pdfjs/pdf.worker.min.js"></script>
+
+    <!-- Include Mammoth.js -->
+    <script src="lib/mammoth/mammoth.browser.min.js"></script>
+
+    <!-- Include gpt-tokenizer -->
+    <script src="lib/gpt-tokenizer/gpt-tokenizer.min.js"></script>
+
+    <!-- Include Tokenization -->
+    <script src="src/utils/tokenization.js"></script>
+
+    <!-- Include Base Provider -->
+    <script src="src/api/providers/BaseProvider.js"></script>
+
+    <!-- Include Provider Classes -->
+    <script src="src/api/providers/AzureProvider.js"></script>
+    <script src="src/api/providers/OpenAIProvider.js"></script>
+    <script src="src/api/providers/AnthropicProvider.js"></script>
+    <script src="src/api/providers/OllamaProvider.js"></script>
+
+    <!-- Include Components -->
+    <script src="src/chat/CodeBlockComponent.js"></script>
+
+    <!-- Include Config -->
+    <script src="config.js"></script>
+    <script src="src/config/config_module.js"></script>
+
+    <!-- Include Translations -->
+    <script src="src/localization/translations.js"></script>
+    <script src="src/localization/translation.js"></script>
+
+    <!-- Include Default Models -->
+    <script src="src/api/models/default_models.js"></script>
+    <script src="src/api/models/models_module.js"></script>
+
+    <!-- Application Modules -->
+    <script src="src/storage/storage.js"></script>
+    <script src="src/api/api.js"></script>
+    <script src="src/chat/chat.js"></script>
+    <script src="src/chat/message.js"></script>
+    <script src="src/chat/rendering.js"></script>
+    <script src="src/initialize.js"></script>
+    <!-- Event Modules -->
+    <script src="src/events/input_events.js"></script>
+    <script src="src/events/chat_list_events.js"></script>
+    <script src="src/events/settings_events.js"></script>
+    <script src="src/events/instruction_events.js"></script>
+    <script src="src/events/model_selection_events.js"></script>
+    <script src="src/events/documents_manager_events.js"></script>
+    <script src="src/events/events_module.js"></script>
+    <script src="src/summaries/SummariesModule.js"></script>
+    <script src="src/summaries/SummaryTemplates.js"></script>
+    <script src="src/summaries/SummariesEvents.js"></script>
+    <script src="src/events/file_upload_events.js"></script>
+    <script src="src/modal/modal.js"></script>
+
+    <script>
+      let instructionsLoaded = false;
+      let modelsLoaded = false;
+      let providersLoaded = false;
+      let tutorialLoaded = false;
+      
+      function initializeAppIfReady() {
+        if (instructionsLoaded && modelsLoaded && providersLoaded && tutorialLoaded) {
+          InitializationModule.initializeApp();
+        }
+      }
+    </script>
+
+    <!-- Include Providers -->
+    <script>
+      // Function to dynamically load providers.js if it exists
+      (function() {
+        const script = document.createElement('script');
+        script.src = 'providers.js';
+        script.onload = function() {
+          console.log('providers.js has been loaded.');
+          providersLoaded = true;
+          initializeAppIfReady();
+        };
+        script.onerror = function() {
+          console.warn('providers.js could not be loaded, continuing without providers.');
+          providersLoaded = true;
+          initializeAppIfReady();
+        };
+        document.head.appendChild(script);
+      })();
+
+    </script>
+
+    <!-- Include Instructions -->
+    <script src="src/chat/default_instructions.js"></script>
+
+
+    <!-- Define mergeInstructions function -->
+    <script>
+      async function mergeInstructions() {
+        // Get customInstructions from StorageModule (async IndexedDB call)
+        const storedCustomInstructions = await StorageModule.loadData("customInstructions");
+        const customInstructions = storedCustomInstructions || [];
+
+        // Log values for debugging
+        console.log("Before merging:");
+        console.log("defaultInstructions:", window.defaultInstructions);
+        console.log("additionalInstructions:", window.additionalInstructions);
+        console.log("customInstructions:", customInstructions);
+
+        // Combine all instructions
+        window.instructions = (window.defaultInstructions || [])
+          .concat(window.additionalInstructions || [])
+          .concat(customInstructions);
+
+        // Log merged result
+        console.log("After merging - window.instructions:", window.instructions);
+      }
+    </script>
+
+    <!-- Dynamically load instructions.js and call mergeInstructions -->
+    <script>
+      (function() {
+        const script = document.createElement('script');
+        script.src = 'instructions.js';
+        script.onload = function() {
+          console.log('instructions.js has been loaded.');
+          mergeInstructions().then(() => {
+            instructionsLoaded = true;
+            initializeAppIfReady();
+          });
+        };
+        script.onerror = function() {
+          console.warn('instructions.js could not be loaded, continuing without additional instructions.');
+          window.additionalInstructions = []; // Ensure additionalInstructions is defined even if file is missing
+          mergeInstructions().then(() => {
+            instructionsLoaded = true;
+            initializeAppIfReady();
+          });
+        };
+        document.head.appendChild(script);
+      })();
+    </script>
+
+    <!-- Function to merge models -->
+    <script>
+      async function mergeModels() {
+        const customModels = await StorageModule.loadData("customModels") || {};
+
+        // Combine all models
+        window.models = {
+          ...window.defaultModels,
+          ...window.additionalModels,
+          ...customModels
+        };
+      }
+    </script>
+
+    <!-- Dynamically load models.js and call mergeModels -->
+    <script>
+      (function() {
+        const script = document.createElement('script');
+        script.src = 'models.js';
+        script.onload = function() {
+          console.log('models.js loaded.');
+          mergeModels().then(() => {
+            modelsLoaded = true;
+            initializeAppIfReady();
+          });
+        };
+        script.onerror = function() {
+          console.warn('models.js not found, continuing without user definied models.');
+          window.additionalModels = {};
+          mergeModels().then(() => {
+            modelsLoaded = true;
+            initializeAppIfReady();
+          });
+        };
+        document.head.appendChild(script);
+      })();
+    </script>
+
+    <!-- Include new tutorial module -->
+    <script src="src/tutorial/TutorialModule.js"></script>
+
+    <script>
+      (function() {
+        const script = document.createElement('script');
+        script.src = 'tutorial.js';
+        script.onload = function() {
+          console.log('tutorial.js has been loaded.');
+          tutorialLoaded = true;
+          initializeAppIfReady();
+        };
+        script.onerror = function() {
+          console.warn('tutorial.js could not be loaded, falling back to tutorial.template.js.');
+          const fallbackScript = document.createElement('script');
+          fallbackScript.src = 'tutorial.template.js';
+          fallbackScript.onload = function() {
+            tutorialLoaded = true;
+            initializeAppIfReady();
+          };
+          document.head.appendChild(fallbackScript);
+        };
+        document.head.appendChild(script);
+      })();
+    </script>
+
+  </body>
+</html>
